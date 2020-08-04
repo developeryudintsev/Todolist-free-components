@@ -10,10 +10,15 @@ function App() {
         {id: v1(), title: 'React', isDone: false}
     ])
 
-    const addTask = (title: string,setTitle:(title: string)=>void) => {
-        let newTask = {id: v1(), title: title, isDone: true}
-        setTasks([newTask, ...Tasks])
-        setTitle('')//обнуляем инпут после ввода
+    const addTask = (title: string, setTitle: (title: string) => void, setError: (error: string | null) => void) => {
+        if (title.trim() !== '') {
+            let newTask = {id: v1(), title: title, isDone: true}
+            setTasks([newTask, ...Tasks])
+            setTitle('')//обнуляем инпут после ввода
+        } else {
+            setError('Title is required')
+        }
+
     }
 
     let removeTask = (removeId: string) => {
@@ -36,6 +41,14 @@ function App() {
         setFilter(filterValue)
     }
 
+    const changeStatus = (isDoneValue: boolean, idValue: string) => {
+        let newTasks = Tasks.find(f => f.id === idValue);
+        if (newTasks) {
+            newTasks.isDone = !isDoneValue;
+            setTasks([...Tasks])
+        }
+    }
+
     return (
         <div className="App">
             <TodoList
@@ -43,7 +56,9 @@ function App() {
                 Tasks={tasksLayer}
                 removeTask={removeTask}
                 changeFilter={changeFilter}
+                changeStatus={changeStatus}
                 addTask={addTask}
+                filter={filter}
             />
         </div>
     );
