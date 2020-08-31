@@ -1,105 +1,164 @@
 import React, {useState} from 'react';
 import './App.css';
-import {TodoList} from "./TodoList";
+import {Todolist, TaskType} from './Todolist';
 import {v1} from "uuid";
+import {AddItemForm} from "./AddItemForm";
+import {AppBar, Button, IconButton,  Toolbar, Typography} from "@material-ui/core";
+import {Menu} from "@material-ui/icons";
+import Container from "@material-ui/core/Container";
+import {Grid} from "@material-ui/core";
+import Paper from "@material-ui/core/Paper";
+export type FilterValuesType = "all" | "active" | "completed";
 
 function App() {
-    let todolistId1Task = v1();
-    let todolistId2Task = v1();
-    let [Tasks, setTasks] = useState({
-        [todolistId1Task]: [
-            {id: v1(), title: 'HTML&CSS', isDone: true},
-            {id: v1(), title: 'JS', isDone: false},
-            {id: v1(), title: 'React', isDone: false}
-        ],
-        [todolistId2Task]: [
-            {id: v1(), title: 'HTML&CSS', isDone: true},
-            {id: v1(), title: 'JS', isDone: false},
-            {id: v1(), title: 'React', isDone: false}
-        ]
-    })
-    let [todolists, setTodolists] = useState([
-        {
-            id: todolistId1Task,
-            title: 'What to learn',
-            filter: 'all'
-        },
-        {
-            id: todolistId2Task,
-            title: 'What to buy',
-            filter: 'all'
-        }
+
+    type TodoListType = {
+        id: string;
+        title: string;
+        filter: FilterValuesType;
+    }
+
+    type TaskStateType = {
+        [key: string]: Array<TaskType>
+    }
+    let todoListId1 = v1();
+    let todoListId2 = v1();
+
+    let [todolists, setTodolists] = useState<Array<TodoListType>>([
+        {id: todoListId1, title: 'What to Learn', filter: 'all'},
+        {id: todoListId2, title: 'What to buy', filter: 'all'}
     ])
-    function removeTitleTodolist(id:string){
-        console.log(id)
-        todolists=todolists.filter(f=>f.id!==id);
-        setTodolists([...todolists])
-    }
-    const addTask = (todolistId: string, title: string, setTitle: (title: any) => void, setError: (error: string | null) => void) => {
-        if (title.trim() !== '') {
-            let newTask = {id: v1(), title: title, isDone: true}
-            let todolistTasks=Tasks[todolistId];
-            let addTaskNew=[newTask,...todolistTasks];
-            Tasks[todolistId]=addTaskNew
-            setTasks({...Tasks})
-            setTitle('')//обнуляем инпут после ввода
-        } else {
-            setError('Title is required')
+
+    let [tasks, setTasks] = useState<TaskStateType>(
+        {
+            [todoListId1]: [
+                {id: v1(), title: "HTML&CSS", isDone: true},
+                {id: v1(), title: "JS", isDone: true},
+                {id: v1(), title: "ReactJS", isDone: false},
+            ],
+            [todoListId2]: [
+                {id: v1(), title: "SaSS", isDone: true},
+                {id: v1(), title: "Rest API", isDone: false},
+                {id: v1(), title: "GraphQL", isDone: false},
+            ]
         }
-
+    )
+    const changeTaskTitle=(taskID: string, newTitle: string, todoListId: string)=>{
+             let todoListTasks = tasks[todoListId];
+        let task = todoListTasks.find(f => f.id === taskID);
+        if (task) {
+            task.title = newTitle;
+            console.log(todoListId)//
+            setTasks({...tasks})
+        }
     }
-    let removeTask = (removeId: string,todolistID:string) => {
-        let removeTaskId=Tasks[todolistID]
-        console.log(removeTaskId)
-        Tasks[todolistID]=removeTaskId.filter(f=>f.id!==removeId)
-        setTasks({...Tasks})
-    }
 
-    const changeFilter = (filterValue: string, todolistId: string) => {
-        let filterF = todolists.find(f => f.id === todolistId);
-        if (filterF) {
-            filterF.filter = filterValue;
+    function removeTodolist(todoListId: string) {
+        delete tasks[todoListId];
+        setTasks({...tasks})
+        setTodolists(todolists.filter(f => f.id !== todoListId))
+    }
+    function removeTask(id: string, todoListId: string) {
+        let todoListTasks = tasks[todoListId];
+        tasks[todoListId] = todoListTasks.filter(f => f.id !== id);
+        setTasks({...tasks});
+    }
+    const addTask = (title: string, todoListId: string) => {
+        let newTask = {id: v1(), title: title, isDone: false};
+        let todoListTasks = tasks[todoListId];
+        tasks[todoListId] = [newTask, ...todoListTasks]
+        setTasks({...tasks});
+    }
+    function changeFilter(value: FilterValuesType, todoListId: string) {
+        let todoList = todolists.find(f => f.id === todoListId);
+        if (todoList) {
+            todoList.filter = value;
             setTodolists([...todolists])
         }
     }
-    const changeStatus = (isDoneValue: boolean, idValue: string,todolistId:string) => {
-        let changeStatysId=Tasks[todolistId];
-        let newTasks = changeStatysId.find(f => f.id === idValue);
-        if (newTasks) {
-            newTasks.isDone = !isDoneValue;
-            setTasks({...Tasks})
+    function changeStatus(id: string, isDone: boolean, todoListId: string) {
+        let todoListTasks = tasks[todoListId];
+        let task = todoListTasks.find(f => f.id === id);
+        if (task) {
+            task.isDone = !isDone;
+            setTasks({...tasks})
         }
     }
 
-    return (
-        <div className="App">
-            {todolists.map(m => {
-                let tasksLayer = Tasks[m.id]
-                if (m.filter === 'Active') {
-                    tasksLayer = Tasks[m.id].filter(f => f.isDone === false)
-                }
-                if (m.filter === 'Completed') {
-                    tasksLayer = Tasks[m.id].filter(f => f.isDone === true)
-                }
+    function addTodoList(title: string) {
+        let newTodoListId = v1();
+        let newTodoList: TodoListType = {
+            id:newTodoListId,
+            title:title,
+            filter:'all'
+        }
+        setTodolists([...todolists,newTodoList]);
+        setTasks({
+            ...tasks,[newTodoListId]:[]
+        })
+    }
 
+    function cgangeTodolistTitle(todoListId:string,newTitle:string) {
+let todolist=todolists.find(f=>f.id===todoListId);
+if(todolist){
+    todolist.title=newTitle;
+    setTodolists([...todolists]);
+}
+    }
+
+    return <div className="App">
+        <AppBar position="static">
+            <Toolbar>
+                <IconButton edge="start"  color="inherit" aria-label="menu">
+                    <Menu/>
+                </IconButton>
+                <Typography variant="h6">
+                    News
+                </Typography>
+                <Button color="inherit">Login</Button>
+            </Toolbar>
+        </AppBar>
+        <Container >
+            <Grid spacing={0} container style={{padding:'30px'}}>
+                <AddItemForm addItem={addTodoList}/>
+            </Grid>
+            <Grid container spacing={3}>
+        {
+            todolists.map(m => {
+                let tasksForTodolist = tasks[m.id];
+                if (m.filter === "active") {
+                    tasksForTodolist = tasks[m.id].filter(t => t.isDone === true);
+                }
+                if (m.filter === "completed") {
+                    tasksForTodolist = tasks[m.id].filter(t => t.isDone === false);
+                }
                 return (
-                    <TodoList
+                <Grid item>
+                    <p></p>
+                    <Paper style={{padding:'20px'}}>
+                    <Todolist
                         key={m.id}
                         id={m.id}
                         title={m.title}
-                        Tasks={tasksLayer}
+                        tasks={tasksForTodolist}
                         removeTask={removeTask}
                         changeFilter={changeFilter}
-                        changeStatus={changeStatus}
                         addTask={addTask}
+                        changeStatus={changeStatus}
                         filter={m.filter}
-                        removeTitleTodolist={removeTitleTodolist}
+                        deleteTodolist={removeTodolist}
+                        changeTaskTitle={changeTaskTitle}
+                        cgangeTodolistTitle={cgangeTodolistTitle}
                     />
+                    </Paper>
+                </Grid>
                 )
-            })}
+            })
+        }
+            </Grid>
+        </Container>
 
-        </div>
-    );
+    </div>;
 }
 
 export default App;
